@@ -440,21 +440,22 @@
     
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function verifySession() {
-        // Skip checking if we are already on the login page
-        if (window.location.pathname.includes('login.html')) return;
-
-        // Use getUser() instead of getSession() for reliable client-side validation
-        const { data: { user }, error } = await supabaseClient.auth.getUser();
-        
-        if (error || !user) {
-            // Not logged in, redirect to login
+    // Listen for auth state changes to safely handle Vercel's local storage delay
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (!session && !window.location.pathname.includes('login.html')) {
             window.location.href = 'login.html';
         }
-    }
+    });
 
-    // Run verification immediately on load
-    verifySession();
+    // Fallback check after initial load
+    window.addEventListener('DOMContentLoaded', async () => {
+        if (window.location.pathname.includes('login.html')) return;
+        
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) {
+            window.location.href = 'login.html';
+        }
+    });
     </script>
 </body>
 </html>
