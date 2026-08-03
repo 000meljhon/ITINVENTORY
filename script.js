@@ -91,6 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function handleLogout() {
     try {
+        // ---> ADD THIS: Clear the tracking cookie
+        document.cookie = "bbmi_logged_in=; path=/; max-age=0;";
+        
         if (supabaseClient) {
             await supabaseClient.auth.signOut();
         }
@@ -101,7 +104,6 @@ async function handleLogout() {
         window.location.href = 'login.html';
     }
 }
-
 // --- TAB SWITCHING LOGIC ---
 function switchTab(tab) {
     currentTab = tab;

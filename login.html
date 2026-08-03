@@ -84,13 +84,15 @@
 
     try {
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storage: window.localStorage
-    }
-});
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                storage: window.localStorage,
+                storageKey: 'bbmi-portal-auth-token', // Shared static key
+                flowType: 'pkce'                    // Required for stable Vercel production HTTPS
+            }
+        });
     } catch (err) {
         console.error("Supabase initialization failed:", err);
     }
@@ -116,7 +118,9 @@
             errorBox.innerText = error.message;
             errorBox.classList.remove('hidden');
         } else {
-            // Give Supabase a brief 400ms window to safely write the session token to localStorage before redirecting
+            // Set safety fallback cookie + wait for localStorage write before redirect
+            document.cookie = "bbmi_logged_in=true; path=/; max-age=86400; SameSite=Lax";
+            
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 400);
