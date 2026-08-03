@@ -434,42 +434,6 @@
 
     <script src="script.js"></script>
 
-    <script>
-  const SUPABASE_URL = "https://jisseeedzregpbqofjpy.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_mtP0t5oSYN_qe-tL-1qrHw_RNFMhtBK";
-    
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-        auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true,
-            storage: window.localStorage
-        }
-    });
-
-    // FORCE OVERRIDE: Check if ANY Supabase auth key exists in local storage manually
-    if (!window.location.pathname.includes('login.html')) {
-        let foundKey = false;
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.includes('auth-token')) {
-                foundKey = true;
-                break;
-            }
-        }
-
-        // If no token key exists anywhere in localStorage, then kick to login. 
-        // If it DOES exist, stay on the page no matter what getSession says!
-        if (!foundKey) {
-            console.warn("No token found in storage, redirecting...");
-            window.location.href = 'login.html';
-        } else {
-            console.log("Token found! Forcing stay on index.html");
-            const loader = document.getElementById('page-loader');
-            if (loader) loader.style.display = 'none';
-        }
-    }
-    </script>
 </body>
 </html>
 
