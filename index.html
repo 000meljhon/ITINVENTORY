@@ -430,7 +430,7 @@
         </div>
     </div>
 
-    <!-- Custom JavaScript -->
+   <!-- Custom JavaScript -->
     <script src="script.js"></script>
 
     <script>
@@ -439,15 +439,11 @@
     
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Listen for auth state changes or verify session safely
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-        if (!session && window.location.pathname.includes('index.html')) {
-            window.location.href = 'login.html';
-        }
-    });
-
     // Initial check on load
     async function verifySession() {
+        // If we are already on the login page, don't check session loop
+        if (window.location.pathname.includes('login.html')) return;
+
         const { data: { session }, error } = await supabaseClient.auth.getSession();
         if (!session || error) {
             window.location.href = 'login.html';
