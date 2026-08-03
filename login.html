@@ -72,46 +72,49 @@
     </div>
 
     <!-- Script to Handle Supabase Authentication -->
-    <script>
-        // Initialize Icons
-        lucide.createIcons();
+   <script>
+    // Initialize Icons
+    lucide.createIcons();
 
-        // --- SUPABASE CREDENTIALS ---
-        const SUPABASE_URL = "https://jisseeedzregpbqofjpy.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_mtP0t5oSYN_qe-tL-1qrHw_RNFMhtBK";
+    // --- SUPABASE CREDENTIALS ---
+    const SUPABASE_URL = "https://jisseeedzregpbqofjpy.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_mtP0t5oSYN_qe-tL-1qrHw_RNFMhtBK";
 
-        let supabaseClient = null;
+    let supabaseClient = null;
 
-        try {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        } catch (err) {
-            console.error("Supabase initialization failed:", err);
+    try {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch (err) {
+        console.error("Supabase initialization failed:", err);
+    }
+
+    async function handleLogin(event) {
+        event.preventDefault();
+        const email = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value.trim();
+        const errorBox = document.getElementById('loginError');
+
+        if (!supabaseClient) {
+            errorBox.innerText = "Supabase client not initialized.";
+            errorBox.classList.remove('hidden');
+            return;
         }
 
-        async function handleLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('loginUser').value.trim();
-            const password = document.getElementById('loginPass').value.trim();
-            const errorBox = document.getElementById('loginError');
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
 
-            if (!supabaseClient) {
-                errorBox.innerText = "Supabase client not initialized.";
-                errorBox.classList.remove('hidden');
-                return;
-            }
-
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
-
-            if (error) {
-                errorBox.innerText = error.message;
-                errorBox.classList.remove('hidden');
-            } else {
+        if (error) {
+            errorBox.innerText = error.message;
+            errorBox.classList.remove('hidden');
+        } else {
+            // Give Supabase a brief 400ms window to safely write the session token to localStorage before redirecting
+            setTimeout(() => {
                 window.location.href = 'index.html';
-            }
+            }, 400);
         }
-    </script>
+    }
+</script>
 </body>
 </html>
