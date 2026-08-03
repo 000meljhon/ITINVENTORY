@@ -438,31 +438,31 @@
    const SUPABASE_URL = "https://jisseeedzregpbqofjpy.supabase.co";
     const SUPABASE_KEY = "sb_publishable_mtP0t5oSYN_qe-tL-1qrHw_RNFMhtBK";
     
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // 1. Initialize Supabase with explicit local storage persistence
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+            storage: window.localStorage
+        }
+    });
 
-    // Skip check entirely if we are already on the login page
+    // 2. Protect index.html
     if (!window.location.pathname.includes('login.html')) {
-        let checked = false;
-
-        // Listen for Supabase to finish loading the initial session from storage
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            if (event === 'INITIAL_SESSION') {
-                checked = true;
-                if (!session) {
-                    window.location.href = 'login.html';
-                }
-            }
-        });
-
-        // Safety fallback: if INITIAL_SESSION takes too long, verify via getUser
+        // Give local storage a tiny window to settle, then verify session
         setTimeout(async () => {
-            if (!checked) {
-                const { data: { user } } = await supabaseClient.auth.getUser();
-                if (!user) {
-                    window.location.href = 'login.html';
-                }
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
+            
+            if (error || !session) {
+                // Truly not logged in -> redirect to login
+                window.location.href = 'login.html';
+            } else {
+                // Logged in successfully -> remove the loading screen and show dashboard
+                const loader = document.getElementById('page-loader');
+                if (loader) loader.style.display = 'none';
             }
-        }, 1000);
+        }, 300); // 300ms is plenty of time for localStorage to read on Vercel
     }
     </script>
 </body>
