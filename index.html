@@ -431,6 +431,7 @@
     </div>
 
    <!-- Custom JavaScript -->
+
     <script src="script.js"></script>
 
     <script>
@@ -439,19 +440,22 @@
     
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Initial check on load
     async function verifySession() {
-        // If we are already on the login page, don't check session loop
+        // Skip checking if we are already on the login page
         if (window.location.pathname.includes('login.html')) return;
 
-        const { data: { session }, error } = await supabaseClient.auth.getSession();
-        if (!session || error) {
+        // Use getUser() instead of getSession() for reliable client-side validation
+        const { data: { user }, error } = await supabaseClient.auth.getUser();
+        
+        if (error || !user) {
+            // Not logged in, redirect to login
             window.location.href = 'login.html';
         }
     }
-    
+
+    // Run verification immediately on load
     verifySession();
-</script>
+    </script>
 </body>
 </html>
 
