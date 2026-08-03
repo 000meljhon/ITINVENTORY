@@ -2,6 +2,17 @@
 const SUPABASE_URL = "https://jisseeedzregpbqofjpy.supabase.co";
 const SUPABASE_KEY = "sb_publishable_mtP0t5oSYN_qe-tL-1qrHw_RNFMhtBK";
 
+window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage,
+        storageKey: 'bbmi-portal-auth-token',
+        flowType: 'pkce' // <--- REQUIRED for secure Vercel / production environments
+    }
+});
+
 // Global shared client with your fixed storage key
 window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: {
