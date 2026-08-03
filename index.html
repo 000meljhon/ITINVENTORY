@@ -435,27 +435,35 @@
     <script src="script.js"></script>
 
     <script>
-    const SUPABASE_URL = "https://jisseeedzregpbqofjpy.supabase.co";
+   const SUPABASE_URL = "https://jisseeedzregpbqofjpy.supabase.co";
     const SUPABASE_KEY = "sb_publishable_mtP0t5oSYN_qe-tL-1qrHw_RNFMhtBK";
     
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Listen for auth state changes to safely handle Vercel's local storage delay
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-        if (!session && !window.location.pathname.includes('login.html')) {
-            window.location.href = 'login.html';
-        }
-    });
+    // Skip check entirely if we are already on the login page
+    if (!window.location.pathname.includes('login.html')) {
+        let checked = false;
 
-    // Fallback check after initial load
-    window.addEventListener('DOMContentLoaded', async () => {
-        if (window.location.pathname.includes('login.html')) return;
-        
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (!session) {
-            window.location.href = 'login.html';
-        }
-    });
+        // Listen for Supabase to finish loading the initial session from storage
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'INITIAL_SESSION') {
+                checked = true;
+                if (!session) {
+                    window.location.href = 'login.html';
+                }
+            }
+        });
+
+        // Safety fallback: if INITIAL_SESSION takes too long, verify via getUser
+        setTimeout(async () => {
+            if (!checked) {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) {
+                    window.location.href = 'login.html';
+                }
+            }
+        }, 1000);
+    }
     </script>
 </body>
 </html>
