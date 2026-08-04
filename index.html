@@ -4,28 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BBSI - IT Asset & Client Spares Portal</title>
-
-    <!-- Delayed Production Gatekeeper -->
-<!-- Delayed Production Gatekeeper Fix -->
-  <script>
-    (function() {
-        const path = window.location.pathname;
-        if (path.includes('login.html')) return;
-
-        const hasAnyToken = Object.keys(localStorage).some(key => 
-            key.includes('auth-token') || key.includes('token') || key.includes('supabase')
-        );
-
-        if (!hasAnyToken) {
-            // Only redirect if completely empty
-            window.location.replace('login.html');
-        } else {
-            console.log("Access granted: Token detected in local storage.");
-        }
-    })();
-</script>
-</script>>
-    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
