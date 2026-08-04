@@ -9,42 +9,24 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY,
         detectSessionInUrl: true,
         storage: window.localStorage,
         storageKey: 'bbmi-portal-auth-token',
-        flowType: 'pkce' // <--- REQUIRED for secure Vercel / production environments
+        flowType: 'pkce'
     }
 });
 
-// --- STATE MANAGEMENT WITH PERSISTENCE ---
-let inventory = JSON.parse(localStorage.getItem('bbsi_inventory')) || [
-    { id: 'BBSI-LAP-001', category: 'Laptop', model: 'Dell Latitude 5430', serial: 'DL5430-99281', department: 'Cluster 1', status: 'Deployed', assignee: 'John Doe', prevOwner: 'Jane Smith' },
-    { id: 'BBSI-MON-001', category: 'Monitor', model: 'Dell 24" P2422H', serial: 'MON-883721', department: 'Admin', status: 'Available', assignee: '-', prevOwner: 'Accounting Pool' },
-    { id: 'BBSI-ACC-001', category: 'Mouse & Keyboard', model: 'Logitech MK295 Silent', serial: 'KBMS-44102', department: 'IT', status: 'Available', assignee: '-', prevOwner: '-' }
-];
-
-let clientDevices = JSON.parse(localStorage.getItem('bbsi_clientDevices')) || [
-    { clientName: 'Momentum', category: 'Laptop', model: 'Lenovo ThinkPad T14 Gen 3', serial: 'LNV-MOM-8812', status: 'Ready for Deployment', remarks: 'Configured with standard corporate image' },
-    { clientName: 'Momentum', category: 'Desktop', model: 'HP ProDesk 600 G6', serial: 'HP-MOM-3321', status: 'Active On-Site Spare', remarks: 'Assigned to main floor backup pool' },
-    { clientName: 'Marsh', category: 'Laptop', model: 'Dell Latitude 5530', serial: 'DL-MARSH-9012', status: 'Ready for Deployment', remarks: 'Fresh Windows 11 Pro install' },
-    { clientName: 'Marsh', category: 'Peripherals', model: 'Logitech Wireless Combo MK295', serial: 'ACC-MARSH-441', status: 'Ready for Deployment', remarks: 'In IT storage box #2' },
-    { clientName: 'Contour', category: 'Tablet', model: 'Microsoft Surface Pro 9', serial: 'SURF-CNT-1102', status: 'Active On-Site Spare', remarks: 'Executive emergency backup unit' },
-    { clientName: 'Contour', category: 'Laptop', model: 'Lenovo ThinkPad X1 Carbon', serial: 'LNV-CNT-7734', status: 'Decommissioned / RMA', remarks: 'Pending motherboard replacement' }
-];
+let inventory = [];
+let clientDevices = [];
 
 let currentTab = 'internal';
 let selectedClientFilter = 'All';
 
-function saveState() {
-    localStorage.setItem('bbsi_inventory', JSON.stringify(inventory));
-    localStorage.setItem('bbsi_clientDevices', JSON.stringify(clientDevices));
-}
 // --- AUTHENTICATION CHECK ---
 if (localStorage.getItem('bbsi_authenticated') !== 'true') {
     window.location.href = 'login.html';
 }
 
 // --- INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', () => {
-    renderInternalInventory();
-    renderClientDevices();
+document.addEventListener('DOMContentLoaded', async () => {
+    await fetchCloudData();
     lucide.createIcons();
 
     // Event Listeners for Live Searching
@@ -52,37 +34,76 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('clientSearchInput').addEventListener('input', (e) => renderClientDevices(e.target.value));
 });
 
-// Export Function for Management Report
-        function exportToExcel() {
-            const activeTab = document.getElementById('navInternalBtn').classList.contains('bg-indigo-600') ? 'Internal_Inventory' : 'Client_Spare_Devices';
-            const table = document.querySelector('table');
-            
-            if (!table) {
-                alert('No table data available to export.');
-                return;
-            }
-
-            let csvContent = "data:text/csv;charset=utf-8,";
-            const rows = table.querySelectorAll('tr');
-            
-            rows.forEach(row => {
-                let cols = row.querySelectorAll('th, td');
-                let rowData = [];
-                cols.forEach(col => {
-                    let text = col.innerText.replace(/(\r\n|\n|\r)/gm, "").trim();
-                    rowData.push('"' + text + '"');
-                });
-                csvContent += rowData.join(",") + "\r\n";
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `BBSI_${activeTab}_Report_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+// --- FETCH DATA FROM SUPABASE ---
+async function fetchCloudData() {
+    try {
+        // Fetch Internal Inventory
+        const { data: invData, error: invError } = await supabaseClient.from('inventory').select('*');
+        if (!invError && invData) {
+            inventory = invData.map(item => ({
+                id: item.id,
+                category: item.category,
+                model: item.model,
+                serial: item.serial,
+                department: item.department,
+                status: item.status,
+                assignee: item.assignee,
+                prevOwner: item.prev_owner
+            }));
         }
+
+        // Fetch Client Devices
+        const { data: clientData, error: clientError } = await supabaseClient.from('client_devices').select('*');
+        if (!clientError && clientData) {
+            clientDevices = clientData.map(item => ({
+                id: item.id,
+                clientName: item.client_name,
+                category: item.category,
+                model: item.model,
+                serial: item.serial,
+                status: item.status,
+                remarks: item.remarks
+            }));
+        }
+    } catch (err) {
+        console.error("Error fetching cloud data:", err);
+    }
+
+    renderInternalInventory();
+    renderClientDevices();
+}
+
+// Export Function for Management Report
+function exportToExcel() {
+    const activeTab = document.getElementById('navInternalBtn').classList.contains('bg-indigo-600') ? 'Internal_Inventory' : 'Client_Spare_Devices';
+    const table = document.querySelector('table');
+    
+    if (!table) {
+        alert('No table data available to export.');
+        return;
+    }
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    const rows = table.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        let cols = row.querySelectorAll('th, td');
+        let rowData = [];
+        cols.forEach(col => {
+            let text = col.innerText.replace(/(\r\n|\n|\r)/gm, "").trim();
+            rowData.push('"' + text + '"');
+        });
+        csvContent += rowData.join(",") + "\r\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `BBSI_${activeTab}_Report_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 
 async function handleLogout() {
     try {
@@ -92,7 +113,6 @@ async function handleLogout() {
     } catch (err) {
         console.error("Sign out error:", err);
     } finally {
-        // FIX: Clear the flag on logout
         localStorage.removeItem('bbsi_authenticated');
         window.location.href = 'login.html';
     }
@@ -171,7 +191,6 @@ function renderInternalInventory(searchQuery = '') {
         }
     });
 
-    // Render Metrics Cards (4 columns)
     const metricsContainer = document.getElementById('categoryMetrics');
     metricsContainer.innerHTML = categories.map(cat => `
         <div class="bg-slate-800/50 border border-slate-700/60 backdrop-blur-md p-5 rounded-xl">
@@ -183,7 +202,6 @@ function renderInternalInventory(searchQuery = '') {
         </div>
     `).join('');
 
-    // Filter and Render Table Rows
     const filtered = inventory.filter(item => {
         const query = searchQuery.toLowerCase();
         return item.id.toLowerCase().includes(query) ||
@@ -226,7 +244,6 @@ function renderClientDevices(searchQuery = '') {
     const tbody = document.getElementById('clientTableBody');
     tbody.innerHTML = '';
 
-    // Calculate metrics
     let totalClientSpares = clientDevices.length;
     let readyCount = clientDevices.filter(d => d.status === 'Ready for Deployment').length;
     let activeOrRmaCount = clientDevices.filter(d => d.status !== 'Ready for Deployment').length;
@@ -235,7 +252,6 @@ function renderClientDevices(searchQuery = '') {
     document.getElementById('clientMetricReady').innerText = readyCount;
     document.getElementById('clientMetricActive').innerText = activeOrRmaCount;
 
-    // Filter by Client Tab and Search Input
     const filtered = clientDevices.filter(item => {
         const matchesClient = selectedClientFilter === 'All' || item.clientName === selectedClientFilter;
         const query = searchQuery.toLowerCase();
@@ -275,38 +291,6 @@ function renderClientDevices(searchQuery = '') {
     });
 }
 
-// --- DELETE HANDLERS ---
-
-function deleteInternalItem(index) {
-    if (confirm("Are you sure you want to delete this internal hardware record?")) {
-        inventory.splice(index, 1);
-        saveState(); // <--- ADD THIS LINE
-        renderInternalInventory(document.getElementById('searchInput').value);
-    }
-}
-
-function deleteClientItem(index) {
-    if (confirm("Are you sure you want to delete this client spare device record?")) {
-        clientDevices.splice(index, 1);
-        saveState(); // <--- ADD THIS LINE
-        renderClientDevices(document.getElementById('clientSearchInput').value);
-    }
-}
-
-function deleteInternalItem(index) {
-    if (confirm("Are you sure you want to delete this internal hardware record?")) {
-        inventory.splice(index, 1);
-        renderInternalInventory(document.getElementById('searchInput').value);
-    }
-}
-
-function deleteClientItem(index) {
-    if (confirm("Are you sure you want to delete this client spare device record?")) {
-        clientDevices.splice(index, 1);
-        renderClientDevices(document.getElementById('clientSearchInput').value);
-    }
-}
-
 function filterByClient(clientName) {
     selectedClientFilter = clientName;
     ['All', 'Momentum', 'Marsh', 'Contour'].forEach(c => {
@@ -322,8 +306,8 @@ function filterByClient(clientName) {
     renderClientDevices(document.getElementById('clientSearchInput').value);
 }
 
-// --- FORM SUBMISSIONS ---
-function handleFormSubmit(event) {
+// --- FORM SUBMISSIONS (CLOUD SYNCED) ---
+async function handleFormSubmit(event) {
     event.preventDefault();
     const category = document.getElementById('formCategory').value;
     const status = document.getElementById('formStatus').value;
@@ -332,19 +316,26 @@ function handleFormSubmit(event) {
     const serial = document.getElementById('formSerial').value;
     const assignee = document.getElementById('formAssignee').value;
     const prevOwner = document.getElementById('formPrevOwner').value;
+
     const prefixMap = { 'Laptop': 'LAP', 'Monitor': 'MON', 'Mouse & Keyboard': 'ACC', 'Headset': 'HSD' };
     const count = inventory.filter(i => i.category === category).length + 1;
     const newId = `BBSI-${prefixMap[category]}-${String(count).padStart(3, '0')}`;
 
+    const dbPayload = { id: newId, category, model, serial, department, status, assignee, prev_owner: prevOwner };
+
+    const { error } = await supabaseClient.from('inventory').insert([dbPayload]);
+    if (error) {
+        alert('Error saving to cloud: ' + error.message);
+        return;
+    }
+
     inventory.unshift({ id: newId, category, model, serial, department, status, assignee, prevOwner });
-    
-    saveState(); // <--- ADD THIS LINE
-    
     closeModal();
     document.getElementById('deviceForm').reset();
     renderInternalInventory();
 }
-function handleClientFormSubmit(event) {
+
+async function handleClientFormSubmit(event) {
     event.preventDefault();
     const clientName = document.getElementById('formClientName').value;
     const category = document.getElementById('formClientCategory').value;
@@ -353,7 +344,21 @@ function handleClientFormSubmit(event) {
     const status = document.getElementById('formClientStatus').value;
     const remarks = document.getElementById('formClientRemarks').value;
 
-    clientDevices.unshift({ clientName, category, model, serial, status, remarks });
+    const dbPayload = { client_name: clientName, category, model, serial, status, remarks };
+
+    const { data, error } = await supabaseClient.from('client_devices').insert([dbPayload]).select();
+    if (error) {
+        alert('Error saving to cloud: ' + error.message);
+        return;
+    }
+
+    if (data) {
+        clientDevices.unshift({
+            id: data[0].id,
+            clientName, category, model, serial, status, remarks
+        });
+    }
+
     closeClientModal();
     document.getElementById('clientForm').reset();
     renderClientDevices();
@@ -371,17 +376,26 @@ function openEditModal(index) {
     document.getElementById('editModal').classList.remove('hidden');
 }
 
-function handleEditFormSubmit(event) {
+async function handleEditFormSubmit(event) {
     event.preventDefault();
     const index = document.getElementById('editIndex').value;
-    inventory[index].status = document.getElementById('editStatus').value;
-    inventory[index].department = document.getElementById('editDepartment').value;
-    inventory[index].assignee = document.getElementById('editAssignee').value;
-    inventory[index].prevOwner = document.getElementById('editPrevOwner').value;
-    inventory[index].model = document.getElementById('editModel').value;
-    inventory[index].serial = document.getElementById('editSerial').value;
+    const item = inventory[index];
 
-    saveState(); // <--- ADD THIS LINE
+    item.status = document.getElementById('editStatus').value;
+    item.department = document.getElementById('editDepartment').value;
+    item.assignee = document.getElementById('editAssignee').value;
+    item.prevOwner = document.getElementById('editPrevOwner').value;
+    item.model = document.getElementById('editModel').value;
+    item.serial = document.getElementById('editSerial').value;
+
+    await supabaseClient.from('inventory').update({
+        status: item.status,
+        department: item.department,
+        assignee: item.assignee,
+        prev_owner: item.prevOwner,
+        model: item.model,
+        serial: item.serial
+    }).eq('id', item.id);
 
     closeEditModal();
     renderInternalInventory(document.getElementById('searchInput').value);
@@ -398,17 +412,50 @@ function openEditClientModal(index) {
     document.getElementById('editClientModal').classList.remove('hidden');
 }
 
-function handleEditClientFormSubmit(event) {
+async function handleEditClientFormSubmit(event) {
     event.preventDefault();
     const index = document.getElementById('editClientIndex').value;
-    clientDevices[index].clientName = document.getElementById('editClientName').value;
-    clientDevices[index].status = document.getElementById('editClientStatus').value;
-    clientDevices[index].model = document.getElementById('editClientModel').value;
-    clientDevices[index].serial = document.getElementById('editClientSerial').value;
-    clientDevices[index].remarks = document.getElementById('editClientRemarks').value;
+    const item = clientDevices[index];
 
-    saveState(); // <--- ADD THIS LINE
+    item.clientName = document.getElementById('editClientName').value;
+    item.status = document.getElementById('editClientStatus').value;
+    item.model = document.getElementById('editClientModel').value;
+    item.serial = document.getElementById('editClientSerial').value;
+    item.remarks = document.getElementById('editClientRemarks').value;
+
+    if (item.id) {
+        await supabaseClient.from('client_devices').update({
+            client_name: item.clientName,
+            status: item.status,
+            model: item.model,
+            serial: item.serial,
+            remarks: item.remarks
+        }).eq('id', item.id);
+    }
 
     closeEditClientModal();
     renderClientDevices();
+}
+
+// --- DELETIONS (CLOUD SYNCED) ---
+async function deleteInternalItem(index) {
+    if (confirm("Are you sure you want to delete this internal hardware record?")) {
+        const item = inventory[index];
+        await supabaseClient.from('inventory').delete().eq('id', item.id);
+        
+        inventory.splice(index, 1);
+        renderInternalInventory(document.getElementById('searchInput').value);
+    }
+}
+
+async function deleteClientItem(index) {
+    if (confirm("Are you sure you want to delete this client spare device record?")) {
+        const item = clientDevices[index];
+        if (item.id) {
+            await supabaseClient.from('client_devices').delete().eq('id', item.id);
+        }
+        
+        clientDevices.splice(index, 1);
+        renderClientDevices(document.getElementById('clientSearchInput').value);
+    }
 }
