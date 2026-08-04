@@ -7,17 +7,19 @@
 
     <!-- Delayed Production Gatekeeper -->
 <!-- Delayed Production Gatekeeper Fix -->
-    <script>
+   <script>
         if (!window.location.pathname.includes('login.html')) {
-            // Wait 300ms for Vercel storage hydration before checking credentials
-            setTimeout(() => {
-                const isLoggedIn = document.cookie.split(';').some(item => item.trim().startsWith('bbmi_logged_in=true'));
-                const hasSession = Object.keys(localStorage).some(key => key.includes('-auth-token'));
+            const SUPABASE_URL = 'https://jisseeedzregpbqofjpy.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_mtP0t5oSYN_qe-tL-1qrHw_RNFMhtBK';
+            
+            const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-                if (!isLoggedIn && !hasSession) {
+            // Verify active session from local storage securely
+            supabaseClient.auth.getSession().then(({ data: { session } }) => {
+                if (!session) {
                     window.location.replace('login.html');
                 }
-            }, 300);
+            });
         }
     </script>
     
