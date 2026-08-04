@@ -87,7 +87,8 @@ async function handleLogout() {
     } catch (err) {
         console.error("Sign out error:", err);
     } finally {
-        // Always redirect to login, even if an error is thrown
+        // FIX: Clear the flag on logout
+        localStorage.removeItem('bbsi_authenticated');
         window.location.href = 'login.html';
     }
 }

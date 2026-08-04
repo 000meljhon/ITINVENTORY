@@ -116,6 +116,9 @@
             errorBox.innerText = error.message;
             errorBox.classList.remove('hidden');
         } else {
+            // FIX: Set the local flag that script.js looks for
+            localStorage.setItem('bbsi_authenticated', 'true');
+
             // Give Supabase a brief 400ms window to safely write the session token to localStorage before redirecting
             setTimeout(() => {
                 window.location.href = 'index.html';
