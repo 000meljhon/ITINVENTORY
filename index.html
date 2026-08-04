@@ -4,6 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BBSI - IT Asset & Client Spares Portal</title>
+
+    <!-- Delayed Production Gatekeeper -->
+    <script>
+        if (!window.location.pathname.includes('login.html')) {
+            // Use a slight timeout to allow Vercel storage hydration
+            setTimeout(() => {
+                const isLoggedIn = document.cookie.split(';').some(item => item.trim().startsWith('bbmi_logged_in=true'));
+                const hasSession = Object.keys(localStorage).some(key => key.includes('-auth-token'));
+
+                if (!isLoggedIn && !hasSession) {
+                    window.location.replace('login.html');
+                }
+            }, 300); // 300ms delay prevents false-negative redirects on Vercel
+        }
+    </script>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
