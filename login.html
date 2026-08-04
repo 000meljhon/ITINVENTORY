@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBSI - Admin Authentication</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+
+    <!-- Ambient Background Glows -->
+    <div class="absolute -top-32 -left-32 w-96 h-96 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Login Card Container -->
+    <div class="relative bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl rounded-3xl w-full max-w-md shadow-2xl shadow-indigo-950/40 overflow-hidden p-8 sm:p-10">
+        
+        <!-- Header Branding -->
+        <div class="text-center space-y-3 mb-8">
+            <div class="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-blue-500/10 border border-indigo-500/30 items-center justify-center p-3 shadow-inner">
+                <img src="bbsi-logo.png" alt="BBSI Logo" class="w-full h-full object-contain filter drop-shadow">
+            </div>
+            <h1 class="text-xl font-semibold tracking-tight text-white">BBSI Admin Portal</h1>
+            <p class="text-xs text-slate-400 font-medium">Restricted access. Authorized personnel only.</p>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+            <div>
+                <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Admin Email</label>
+                <div class="relative group">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 group-focus-within:text-indigo-400 transition-colors">
+                        <i data-lucide="mail" class="w-4 h-4"></i>
+                    </span>
+                    <input type="email" id="loginUser" required placeholder="admin@bbsi.com" 
+                        class="w-full bg-slate-950/50 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Password</label>
+                <div class="relative group">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 group-focus-within:text-indigo-400 transition-colors">
+                        <i data-lucide="lock" class="w-4 h-4"></i>
+                    </span>
+                    <input type="password" id="loginPass" required placeholder="••••••••••••" 
+                        class="w-full bg-slate-950/50 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                </div>
+            </div>
+
+            <!-- Error Message Container (Hidden by Default) -->
+            <div id="loginError" class="hidden bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-400 text-center font-medium animate-shake">
+                Invalid credentials. Access denied.
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-medium py-3 rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 group">
+                <span>Authenticate Session</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform"></i>
+            </button>
+        </form>
+
+        <div class="mt-8 pt-6 border-t border-slate-800/60 text-center">
+            <p class="text-[11px] text-slate-500 tracking-wide">BBSI Internal Systems Management &copy; 2026</p>
+        </div>
+    </div>
+
+    <!-- Script to Handle Supabase Authentication -->
+   <script>
+    // Initialize Icons
+    lucide.createIcons();
+
+    // --- SUPABASE CREDENTIALS ---
+    const SUPABASE_URL = "https://jisseeedzregpbqofjpy.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_mtP0t5oSYN_qe-tL-1qrHw_RNFMhtBK";
+
+    let supabaseClient = null;
+
+    try {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage
+    }
+});
+    } catch (err) {
+        console.error("Supabase initialization failed:", err);
+    }
+
+    async function handleLogin(event) {
+        event.preventDefault();
+        const email = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value.trim();
+        const errorBox = document.getElementById('loginError');
+
+        if (!supabaseClient) {
+            errorBox.innerText = "Supabase client not initialized.";
+            errorBox.classList.remove('hidden');
+            return;
+        }
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (error) {
+            errorBox.innerText = error.message;
+            errorBox.classList.remove('hidden');
+        } else {
+            // Give Supabase a brief 400ms window to safely write the session token to localStorage before redirecting
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 400);
+        }
+    }
+</script>
+</body>
+</html>
