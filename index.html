@@ -8,8 +8,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- INSTANT GATEKEEPER CHECK -->
+    <script>
+        if (!window.location.pathname.includes('login.html')) {
+            const isLoggedIn = document.cookie.split(';').some(item => item.trim().startsWith('bbmi_logged_in=true'));
+            const hasSupabaseToken = Object.keys(localStorage).some(key => key.includes('bbmi-portal-auth-token'));
+
+            if (!isLoggedIn && !hasSupabaseToken) {
+                window.location.replace('login.html');
+            }
+        }
+    </script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
