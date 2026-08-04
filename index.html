@@ -6,9 +6,10 @@
     <title>BBSI - IT Asset & Client Spares Portal</title>
 
     <!-- Delayed Production Gatekeeper -->
+<!-- Delayed Production Gatekeeper Fix -->
     <script>
         if (!window.location.pathname.includes('login.html')) {
-            // Use a slight timeout to allow Vercel storage hydration
+            // Wait 300ms for Vercel storage hydration before checking credentials
             setTimeout(() => {
                 const isLoggedIn = document.cookie.split(';').some(item => item.trim().startsWith('bbmi_logged_in=true'));
                 const hasSession = Object.keys(localStorage).some(key => key.includes('-auth-token'));
@@ -16,7 +17,7 @@
                 if (!isLoggedIn && !hasSession) {
                     window.location.replace('login.html');
                 }
-            }, 300); // 300ms delay prevents false-negative redirects on Vercel
+            }, 300);
         }
     </script>
     
