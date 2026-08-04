@@ -309,6 +309,7 @@ function filterByClient(clientName) {
 // --- FORM SUBMISSIONS (CLOUD SYNCED) ---
 async function handleFormSubmit(event) {
     event.preventDefault();
+    const customId = document.getElementById('formCustomId').value.trim();
     const category = document.getElementById('formCategory').value;
     const status = document.getElementById('formStatus').value;
     const department = document.getElementById('formDepartment').value;
@@ -317,11 +318,16 @@ async function handleFormSubmit(event) {
     const assignee = document.getElementById('formAssignee').value;
     const prevOwner = document.getElementById('formPrevOwner').value;
 
-    const prefixMap = { 'Laptop': 'LAP', 'Monitor': 'MON', 'Mouse & Keyboard': 'ACC', 'Headset': 'HSD' };
-    const count = inventory.filter(i => i.category === category).length + 1;
-    const newId = `BBSI-${prefixMap[category]}-${String(count).padStart(3, '0')}`;
-
-    const dbPayload = { id: newId, category, model, serial, department, status, assignee, prev_owner: prevOwner };
+    const dbPayload = { 
+        id: customId, 
+        category, 
+        model, 
+        serial, 
+        department, 
+        status, 
+        assignee, 
+        prev_owner: prevOwner 
+    };
 
     const { error } = await supabaseClient.from('inventory').insert([dbPayload]);
     if (error) {
@@ -329,7 +335,7 @@ async function handleFormSubmit(event) {
         return;
     }
 
-    inventory.unshift({ id: newId, category, model, serial, department, status, assignee, prevOwner });
+    inventory.unshift({ id: customId, category, model, serial, department, status, assignee, prevOwner });
     closeModal();
     document.getElementById('deviceForm').reset();
     renderInternalInventory();
@@ -367,6 +373,7 @@ async function handleClientFormSubmit(event) {
 function openEditModal(index) {
     const item = inventory[index];
     document.getElementById('editIndex').value = index;
+    document.getElementById('editCustomId').value = item.id; // Populate Asset ID
     document.getElementById('editStatus').value = item.status;
     document.getElementById('editDepartment').value = item.department;
     document.getElementById('editAssignee').value = item.assignee;
@@ -380,7 +387,36 @@ async function handleEditFormSubmit(event) {
     event.preventDefault();
     const index = document.getElementById('editIndex').value;
     const item = inventory[index];
+    const newCustomId = document.getElementById('editCustomId').value.trim();
 
+    // If the primary key (Asset ID) is changed, we delete the old record and insert the updated one 
+    // to avoid primary key constraint conflicts in Supabase.
+    if (item.id !== newCustomId) {
+        // Delete old row
+        await supabaseClient.from('inventory').delete().eq('id', item.id);
+
+        // Insert new row with updated ID
+        const dbPayload = {
+            id: newCustomId,
+            category: item.category,
+            model: document.getElementById('editModel').value,
+            serial: document.getElementById('editSerial').value,
+            department: document.getElementById('editDepartment').value,
+            status: document.getElementById('editStatus').value,
+            assignee: document.getElementById('editAssignee').value,
+            prev_owner: document.getElementById('editPrevOwner').value
+        };
+
+        const { error } = await supabaseClient.from('inventory').insert([dbPayload]);
+        if (error) {
+            alert('Error updating Asset ID: ' + error.message);
+            return;
+        }
+
+        item.id = newCustomId;
+    }
+
+    // Update local state values
     item.status = document.getElementById('editStatus').value;
     item.department = document.getElementById('editDepartment').value;
     item.assignee = document.getElementById('editAssignee').value;
@@ -388,6 +424,7 @@ async function handleEditFormSubmit(event) {
     item.model = document.getElementById('editModel').value;
     item.serial = document.getElementById('editSerial').value;
 
+    // Update standard fields in Supabase
     await supabaseClient.from('inventory').update({
         status: item.status,
         department: item.department,

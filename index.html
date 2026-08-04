@@ -169,6 +169,13 @@
             </div>
             
             <form id="deviceForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                <!-- ADDED CUSTOM ASSET ID FIELD HERE -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Asset ID</label>
+                    <input type="text" id="formCustomId" required placeholder="e.g., BBSI-LAP-001" 
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Category</label>
@@ -243,10 +250,15 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            
             <form id="editForm" onsubmit="handleEditFormSubmit(event)" class="p-6 space-y-4">
                 <input type="hidden" id="editIndex">
                 
+                <!-- ADDED ASSET ID EDIT FIELD HERE -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Asset ID</label>
+                    <input type="text" id="editCustomId" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Status</label>
@@ -300,23 +312,33 @@
     </div>
 
     <!-- Modal 3: Register Client Spare Device -->
-    <div id="clientModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-800/50">
-                <h3 class="font-semibold text-base text-slate-100 flex items-center gap-2">
-                    <i data-lucide="shield-plus" class="w-5 h-5 text-indigo-500"></i>
-                    Register Client Spare Device
-                </h3>
-                <button onclick="closeClientModal()" class="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
+<!-- Modal 3: Register Client Spare Device -->
+<div id="clientModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-800/50">
+            <h3 class="font-semibold text-base text-slate-100 flex items-center gap-2">
+                <i data-lucide="shield-plus" class="w-5 h-5 text-indigo-500"></i>
+                Register Client Spare Device
+            </h3>
+            <button onclick="closeClientModal()" class="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <form id="clientForm" onsubmit="handleClientFormSubmit(event)" class="p-6 space-y-4">
             
-            <form id="clientForm" onsubmit="handleClientFormSubmit(event)" class="p-6 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Client Name</label>
-                        <select id="formClientName" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <!-- ⬇️ PUT IT RIGHT HERE AT THE TOP OF THE FORM ⬇️ -->
+            <div>
+                <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Asset / Spare ID</label>
+                <input type="text" id="formClientCustomId" required placeholder="e.g., MOM-SPARE-01" 
+                    class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:border-indigo-500">
+            </div>
+
+            <!-- The rest of your client fields follow below... -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Client Name</label>
+                    <select id="formClientName" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
                             <option value="Momentum">Momentum</option>
                             <option value="Marsh">Marsh</option>
                             <option value="Contour">Contour</option>
@@ -371,7 +393,7 @@
     </div>
 
     <!-- Modal 4: Edit Client Spare Device -->
-    <div id="editClientModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="editClientModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-800/50">
                 <h3 class="font-semibold text-base text-slate-100 flex items-center gap-2">
@@ -386,6 +408,13 @@
             <form id="editClientForm" onsubmit="handleEditClientFormSubmit(event)" class="p-6 space-y-4">
                 <input type="hidden" id="editClientIndex">
                 
+                <!-- ⬇️ PUT IT RIGHT HERE BELOW THE HIDDEN INPUT ⬇️ -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Asset / Spare ID</label>
+                    <input type="text" id="editClientCustomId" required 
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Client Name</label>
