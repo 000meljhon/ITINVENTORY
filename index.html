@@ -8,17 +8,22 @@
     <!-- Delayed Production Gatekeeper -->
 <!-- Delayed Production Gatekeeper Fix -->
   <script>
-    // Only run if we are NOT on the login page
-    if (!window.location.pathname.includes('login.html')) {
-        // Check if ANY valid Supabase or portal auth token exists in local storage
-        const hasSupabaseToken = Object.keys(localStorage).some(key => key.includes('auth-token'));
-        const hasCustomToken = localStorage.getItem('bbmi-portal-auth-token');
+    (function() {
+        const path = window.location.pathname;
+        if (path.includes('login.html')) return;
 
-        if (!hasSupabaseToken && !hasCustomToken) {
-            // No token found anywhere, kick back to login
+        const hasAnyToken = Object.keys(localStorage).some(key => 
+            key.includes('auth-token') || key.includes('token') || key.includes('supabase')
+        );
+
+        if (!hasAnyToken) {
+            // Only redirect if completely empty
             window.location.replace('login.html');
+        } else {
+            console.log("Access granted: Token detected in local storage.");
         }
-    }
+    })();
+</script>
 </script>>
     
     <!-- Tailwind CSS -->
