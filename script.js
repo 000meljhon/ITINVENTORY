@@ -13,16 +13,6 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY,
     }
 });
 
-// Global shared client with your fixed storage key
-window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storage: window.localStorage,
-        storageKey: 'bbmi-portal-auth-token'
-    }
-});
 let inventory = [
     { id: 'BBSI-LAP-001', category: 'Laptop', model: 'Dell Latitude 5430', serial: 'DL5430-99281', department: 'Cluster 1', status: 'Deployed', assignee: 'John Doe', prevOwner: 'Jane Smith' },
     { id: 'BBSI-MON-001', category: 'Monitor', model: 'Dell 24" P2422H', serial: 'MON-883721', department: 'Admin', status: 'Available', assignee: '-', prevOwner: 'Accounting Pool' },
@@ -91,9 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function handleLogout() {
     try {
-        // ---> ADD THIS: Clear the tracking cookie
-        document.cookie = "bbmi_logged_in=; path=/; max-age=0;";
-        
         if (supabaseClient) {
             await supabaseClient.auth.signOut();
         }
@@ -104,6 +91,7 @@ async function handleLogout() {
         window.location.href = 'login.html';
     }
 }
+
 // --- TAB SWITCHING LOGIC ---
 function switchTab(tab) {
     currentTab = tab;
