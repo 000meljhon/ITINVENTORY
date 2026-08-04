@@ -114,15 +114,15 @@
             password: password,
         });
 
-        if (error) {
+      if (error) {
             errorBox.innerText = error.message;
             errorBox.classList.remove('hidden');
         } else {
-            // Set safety fallback cookie + wait for localStorage write before redirect
-            document.cookie = "bbmi_logged_in=true; path=/; max-age=86400; SameSite=Lax";
+            // Set cookie and pass a verified flag in the URL
+            document.cookie = "bbmi_logged_in=true; path=/; max-age=86400;";
             
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = 'index.html?authorized=true';
             }, 400);
         }
     }
