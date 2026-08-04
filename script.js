@@ -13,13 +13,14 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY,
     }
 });
 
-let inventory = [
+// --- STATE MANAGEMENT WITH PERSISTENCE ---
+let inventory = JSON.parse(localStorage.getItem('bbsi_inventory')) || [
     { id: 'BBSI-LAP-001', category: 'Laptop', model: 'Dell Latitude 5430', serial: 'DL5430-99281', department: 'Cluster 1', status: 'Deployed', assignee: 'John Doe', prevOwner: 'Jane Smith' },
     { id: 'BBSI-MON-001', category: 'Monitor', model: 'Dell 24" P2422H', serial: 'MON-883721', department: 'Admin', status: 'Available', assignee: '-', prevOwner: 'Accounting Pool' },
     { id: 'BBSI-ACC-001', category: 'Mouse & Keyboard', model: 'Logitech MK295 Silent', serial: 'KBMS-44102', department: 'IT', status: 'Available', assignee: '-', prevOwner: '-' }
 ];
 
-let clientDevices = [
+let clientDevices = JSON.parse(localStorage.getItem('bbsi_clientDevices')) || [
     { clientName: 'Momentum', category: 'Laptop', model: 'Lenovo ThinkPad T14 Gen 3', serial: 'LNV-MOM-8812', status: 'Ready for Deployment', remarks: 'Configured with standard corporate image' },
     { clientName: 'Momentum', category: 'Desktop', model: 'HP ProDesk 600 G6', serial: 'HP-MOM-3321', status: 'Active On-Site Spare', remarks: 'Assigned to main floor backup pool' },
     { clientName: 'Marsh', category: 'Laptop', model: 'Dell Latitude 5530', serial: 'DL-MARSH-9012', status: 'Ready for Deployment', remarks: 'Fresh Windows 11 Pro install' },
@@ -31,6 +32,10 @@ let clientDevices = [
 let currentTab = 'internal';
 let selectedClientFilter = 'All';
 
+function saveState() {
+    localStorage.setItem('bbsi_inventory', JSON.stringify(inventory));
+    localStorage.setItem('bbsi_clientDevices', JSON.stringify(clientDevices));
+}
 // --- AUTHENTICATION CHECK ---
 if (localStorage.getItem('bbsi_authenticated') !== 'true') {
     window.location.href = 'login.html';
@@ -271,6 +276,23 @@ function renderClientDevices(searchQuery = '') {
 }
 
 // --- DELETE HANDLERS ---
+
+function deleteInternalItem(index) {
+    if (confirm("Are you sure you want to delete this internal hardware record?")) {
+        inventory.splice(index, 1);
+        saveState(); // <--- ADD THIS LINE
+        renderInternalInventory(document.getElementById('searchInput').value);
+    }
+}
+
+function deleteClientItem(index) {
+    if (confirm("Are you sure you want to delete this client spare device record?")) {
+        clientDevices.splice(index, 1);
+        saveState(); // <--- ADD THIS LINE
+        renderClientDevices(document.getElementById('clientSearchInput').value);
+    }
+}
+
 function deleteInternalItem(index) {
     if (confirm("Are you sure you want to delete this internal hardware record?")) {
         inventory.splice(index, 1);
@@ -310,17 +332,18 @@ function handleFormSubmit(event) {
     const serial = document.getElementById('formSerial').value;
     const assignee = document.getElementById('formAssignee').value;
     const prevOwner = document.getElementById('formPrevOwner').value;
-
     const prefixMap = { 'Laptop': 'LAP', 'Monitor': 'MON', 'Mouse & Keyboard': 'ACC', 'Headset': 'HSD' };
     const count = inventory.filter(i => i.category === category).length + 1;
     const newId = `BBSI-${prefixMap[category]}-${String(count).padStart(3, '0')}`;
 
     inventory.unshift({ id: newId, category, model, serial, department, status, assignee, prevOwner });
+    
+    saveState(); // <--- ADD THIS LINE
+    
     closeModal();
     document.getElementById('deviceForm').reset();
     renderInternalInventory();
 }
-
 function handleClientFormSubmit(event) {
     event.preventDefault();
     const clientName = document.getElementById('formClientName').value;
@@ -358,8 +381,10 @@ function handleEditFormSubmit(event) {
     inventory[index].model = document.getElementById('editModel').value;
     inventory[index].serial = document.getElementById('editSerial').value;
 
+    saveState(); // <--- ADD THIS LINE
+
     closeEditModal();
-    renderInternalInventory();
+    renderInternalInventory(document.getElementById('searchInput').value);
 }
 
 function openEditClientModal(index) {
@@ -381,6 +406,8 @@ function handleEditClientFormSubmit(event) {
     clientDevices[index].model = document.getElementById('editClientModel').value;
     clientDevices[index].serial = document.getElementById('editClientSerial').value;
     clientDevices[index].remarks = document.getElementById('editClientRemarks').value;
+
+    saveState(); // <--- ADD THIS LINE
 
     closeEditClientModal();
     renderClientDevices();
