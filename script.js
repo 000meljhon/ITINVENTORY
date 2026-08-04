@@ -207,8 +207,9 @@ function renderInternalInventory(searchQuery = '') {
                 <td class="p-4"><span class="px-2.5 py-1 rounded-md text-xs font-medium border ${statusColor}">${item.status}</span></td>
                 <td class="p-4">${item.assignee}</td>
                 <td class="p-4 text-slate-400">${item.prevOwner}</td>
-                <td class="p-4 text-right">
+                <td class="p-4 text-right flex items-center justify-end space-x-2">
                     <button onclick="openEditModal(${index})" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 rounded-lg text-xs font-semibold transition">Change Status</button>
+                    <button onclick="deleteInternalItem(${index})" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg text-xs font-semibold transition">Delete</button>
                 </td>
             </tr>
         `;
@@ -260,12 +261,28 @@ function renderClientDevices(searchQuery = '') {
                 <td class="p-4 font-mono text-xs text-slate-400">${item.serial}</td>
                 <td class="p-4"><span class="px-2.5 py-1 rounded-md text-xs font-medium border ${statusColor}">${item.status}</span></td>
                 <td class="p-4 text-slate-400 text-xs">${item.remarks}</td>
-                <td class="p-4 text-right">
+                <td class="p-4 text-right flex items-center justify-end space-x-2">
                     <button onclick="openEditClientModal(${index})" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 rounded-lg text-xs font-semibold transition">Edit Details</button>
+                    <button onclick="deleteClientItem(${index})" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg text-xs font-semibold transition">Delete</button>
                 </td>
             </tr>
         `;
     });
+}
+
+// --- DELETE HANDLERS ---
+function deleteInternalItem(index) {
+    if (confirm("Are you sure you want to delete this internal hardware record?")) {
+        inventory.splice(index, 1);
+        renderInternalInventory(document.getElementById('searchInput').value);
+    }
+}
+
+function deleteClientItem(index) {
+    if (confirm("Are you sure you want to delete this client spare device record?")) {
+        clientDevices.splice(index, 1);
+        renderClientDevices(document.getElementById('clientSearchInput').value);
+    }
 }
 
 function filterByClient(clientName) {
