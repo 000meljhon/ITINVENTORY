@@ -409,10 +409,21 @@
                 <input type="hidden" id="editClientIndex">
                 
                 <!-- ⬇️ PUT IT RIGHT HERE BELOW THE HIDDEN INPUT ⬇️ -->
-                <div>
+               <div>
                     <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Asset / Spare ID</label>
                     <input type="text" id="editClientCustomId" required 
                         class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <!-- Category Dropdown Added Here -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Category</label>
+                    <select id="editClientCategory" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                        <option value="Laptop">Laptop</option>
+                        <option value="Desktop">Desktop</option>
+                        <option value="Monitor">Monitor</option>
+                        <option value="Peripherals">Peripherals</option>
+                    </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
